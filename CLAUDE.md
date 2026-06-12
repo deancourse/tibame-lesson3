@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Zeabur Deployment
+
+- Zeabur 用的 Dockerfile 在 repo 根目錄（`Dockerfile.api`、`Dockerfile.web`，依服務名自動選用；皆聽 8080），web 的 nginx 設定為 `apps/web/nginx.zeabur.conf`
+
 ## Project
 
 Vehicle Management System (VMS), a Traditional-Chinese internal app. npm workspaces monorepo (pnpm ≥ 10 also supported — config in `pnpm-workspace.yaml`; dual lockfiles, keep both in sync when deps change), Node ≥ 20, ESM throughout.
