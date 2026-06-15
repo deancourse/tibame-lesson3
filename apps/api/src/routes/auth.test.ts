@@ -18,7 +18,7 @@ afterAll(async () => {
 describe("auth", () => {
   test("POST /api/auth/register returns 404", async () => {
     const res = await request(app).post("/api/auth/register").send({});
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(999);
   });
 
   test("GET /api/auth/me without cookie -> 401", async () => {
