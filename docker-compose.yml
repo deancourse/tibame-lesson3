@@ -34,12 +34,19 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
       PGADMIN_CONFIG_SERVER_MODE: "False"
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True"
     ports:
       - "5050:80"
     volumes:
       - vms_pgadmin:/var/lib/pgadmin
-      - ./infra/pgadmin/servers.json:/pgadmin4/servers.json:ro
-      - ./infra/pgadmin/pgpass:/pgpass:ro
+      - type: bind
+        source: ./infra/pgadmin/servers.json
+        target: /pgadmin4/servers.json
+        read_only: true
+      - type: bind
+        source: ./infra/pgadmin/pgpass
+        target: /pgpass
+        read_only: true
     entrypoint:
       - /bin/sh
       - -c

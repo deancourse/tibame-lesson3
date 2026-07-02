@@ -1,1 +1,1 @@
-db:5432:vms:vms:vms
+db:5432:*:vms:vms

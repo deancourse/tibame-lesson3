@@ -25,7 +25,7 @@ export default defineConfig({
     port: Number(env.WEB_PORT ?? 3087),
     proxy: {
       "/api": {
-        target: env.API_TARGET ?? "http://localhost:8090",
+        target: env.API_TARGET ?? "http://127.0.0.1:8090",
         changeOrigin: true,
       },
     },
