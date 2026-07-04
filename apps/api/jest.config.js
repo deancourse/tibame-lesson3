@@ -19,6 +19,13 @@ export default {
   },
   setupFiles: ["<rootDir>/apps/api/src/test/jest-env.ts"],
   testMatch: ["<rootDir>/apps/api/src/**/*.test.ts"],
+  collectCoverageFrom: [
+    "<rootDir>/apps/api/src/**/*.ts",
+    "!<rootDir>/apps/api/src/**/*.test.ts",
+    "!<rootDir>/apps/api/src/test/**",
+  ],
+  coverageDirectory: "<rootDir>/apps/api/coverage",
+  coverageReporters: ["text", "lcov", "html"],
   maxWorkers: 1,
   testTimeout: 15000,
 };
