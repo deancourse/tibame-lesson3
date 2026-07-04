@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, type Resolver, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import type { z } from "zod";
 import {
   createVehicleSchema,
-  type CreateVehicleInput,
   VEHICLE_COLORS,
   VEHICLE_MAKES,
   VEHICLE_STATUSES,
@@ -90,6 +90,9 @@ interface Page<T> {
 }
 
 const OWNER_NONE = "__NONE__";
+
+type VehicleFormValues = z.input<typeof createVehicleSchema>;
+const createVehicleResolver = zodResolver(createVehicleSchema) as Resolver<VehicleFormValues>;
 
 function useDebounced<T>(value: T, ms = 300): T {
   const [v, setV] = useState(value);
@@ -347,7 +350,7 @@ function VehicleSheet({
   onSuccess: () => void;
 }) {
   const isNew = editing === "new";
-  const defaultValues = useMemo<Partial<CreateVehicleInput>>(() => {
+  const defaultValues = useMemo<Partial<VehicleFormValues>>(() => {
     if (isNew)
       return {
         status: "AVAILABLE",
@@ -376,8 +379,8 @@ function VehicleSheet({
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<CreateVehicleInput>({
-    resolver: zodResolver(createVehicleSchema),
+  } = useForm<VehicleFormValues>({
+    resolver: createVehicleResolver,
     defaultValues,
   });
 
@@ -427,9 +430,9 @@ function VehicleSheet({
                   valueAsNumber: f.type === "number",
                 })}
               />
-              {errors[f.name as keyof CreateVehicleInput] && (
+              {errors[f.name as keyof VehicleFormValues] && (
                 <p className="text-xs text-destructive">
-                  {(errors[f.name as keyof CreateVehicleInput] as { message?: string })?.message}
+                  {(errors[f.name as keyof VehicleFormValues] as { message?: string })?.message}
                 </p>
               )}
             </div>

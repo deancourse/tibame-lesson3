@@ -9,6 +9,7 @@ import {
 } from "@vms/shared";
 import { prisma } from "../db/prisma.js";
 import { HttpError } from "../lib/http-error.js";
+import { isPrismaKnownError } from "../lib/prisma-error.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { publicEmployee } from "../services/employee-serializer.js";
 
@@ -18,11 +19,36 @@ const UNIQUE_FIELDS_FROM_TARGETS: Record<string, "employeeNo" | "email" | "usern
   username: "username",
 };
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function uniqueFieldFromTarget(target: string) {
+  const normalized = target.replaceAll("\"", "");
+  return UNIQUE_FIELDS_FROM_TARGETS[target] ?? UNIQUE_FIELDS_FROM_TARGETS[normalized];
+}
+
 function uniqueConflictField(err: unknown): string | undefined {
-  if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-    const target = (err.meta?.target ?? []) as string[];
+  if (isPrismaKnownError(err) && err.code === "P2002") {
+    const adapterCause = asRecord(
+      asRecord(err.meta?.driverAdapterError)?.cause,
+    );
+    const adapterConstraint = asRecord(adapterCause?.constraint);
+    const target = [
+      ...asStringArray(err.meta?.target),
+      ...asStringArray(adapterConstraint?.fields),
+    ];
     for (const t of target) {
-      if (UNIQUE_FIELDS_FROM_TARGETS[t]) return UNIQUE_FIELDS_FROM_TARGETS[t];
+      const field = uniqueFieldFromTarget(t);
+      if (field) return field;
     }
   }
   return undefined;
@@ -118,7 +144,7 @@ employeesRouter.patch("/:id", async (req, res) => {
     res.json(publicEmployee(updated));
   } catch (err) {
     if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
+      isPrismaKnownError(err) &&
       err.code === "P2025"
     ) {
       throw new HttpError(404, "EMPLOYEE_NOT_FOUND", "找不到該員工");
@@ -142,7 +168,7 @@ employeesRouter.post("/:id/reset-password", async (req, res) => {
     res.status(204).end();
   } catch (err) {
     if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
+      isPrismaKnownError(err) &&
       err.code === "P2025"
     ) {
       throw new HttpError(404, "EMPLOYEE_NOT_FOUND", "找不到該員工");

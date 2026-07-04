@@ -48,7 +48,7 @@ export async function waitForAuditLog(
     if (found) return found;
     if (Date.now() > deadline) {
       throw new Error(
-        `waitForAuditLog 逾時；現有 actions=${JSON.stringify(rows.map((r) => r.action))}`,
+        `waitForAuditLog 逾時；現有 actions=${JSON.stringify(rows.map((r: AuditLog) => r.action))}`,
       );
     }
     await new Promise((r) => setTimeout(r, intervalMs));

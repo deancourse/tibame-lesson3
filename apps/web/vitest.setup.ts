@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom/vitest";
+import { vi } from "vitest";
 
 if (typeof globalThis.IntersectionObserver === "undefined") {
   class IntersectionObserverMock {
@@ -13,6 +14,23 @@ if (typeof globalThis.IntersectionObserver === "undefined") {
     thresholds = [];
   }
   globalThis.IntersectionObserver = IntersectionObserverMock as unknown as typeof IntersectionObserver;
+}
+
+if (typeof window.matchMedia !== "function") {
+  Object.defineProperty(window, "matchMedia", {
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+    configurable: true,
+    writable: true,
+  });
 }
 
 // jsdom 在此環境未提供可用的 localStorage（useTheme 會用到）；補上記憶體版實作。

@@ -125,7 +125,11 @@ async function main() {
   const usedUsernames = new Set<string>();
   const usedEmails = new Set<string>();
   const usedEmployeeNos = new Set<string>();
-  (await prisma.employee.findMany({ select: { username: true, email: true, employeeNo: true } })).forEach((e) => {
+  (
+    await prisma.employee.findMany({
+      select: { username: true, email: true, employeeNo: true },
+    })
+  ).forEach((e: { username: string; email: string; employeeNo: string }) => {
     usedUsernames.add(e.username);
     usedEmails.add(e.email);
     usedEmployeeNos.add(e.employeeNo);

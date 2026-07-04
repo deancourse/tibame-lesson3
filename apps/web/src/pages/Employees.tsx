@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, type Resolver, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import type { z } from "zod";
 import {
   createEmployeeSchema,
   resetPasswordSchema,
-  type CreateEmployeeInput,
   type ResetPasswordInput,
   DEPARTMENTS,
   EMPLOYEE_STATUSES,
@@ -83,6 +83,9 @@ interface Page<T> {
   total: number;
   totalPages: number;
 }
+
+type EmployeeFormValues = z.input<typeof createEmployeeSchema>;
+const createEmployeeResolver = zodResolver(createEmployeeSchema) as Resolver<EmployeeFormValues>;
 
 export function EmployeesPage() {
   const qc = useQueryClient();
@@ -297,8 +300,8 @@ function EmployeeSheet({
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<CreateEmployeeInput>({
-    resolver: isNew ? zodResolver(createEmployeeSchema) : undefined,
+  } = useForm<EmployeeFormValues>({
+    resolver: isNew ? createEmployeeResolver : undefined,
     defaultValues: isNew
       ? {
           role: "USER",
@@ -359,9 +362,9 @@ function EmployeeSheet({
             <div key={f.name} className="space-y-1.5">
               <Label htmlFor={f.name}>{f.label}</Label>
               <Input id={f.name} type={f.type} {...register(f.name as "name")} />
-              {errors[f.name as keyof CreateEmployeeInput] && (
+              {errors[f.name as keyof EmployeeFormValues] && (
                 <p className="text-xs text-destructive">
-                  {(errors[f.name as keyof CreateEmployeeInput] as { message?: string })?.message}
+                  {(errors[f.name as keyof EmployeeFormValues] as { message?: string })?.message}
                 </p>
               )}
             </div>

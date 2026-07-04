@@ -102,6 +102,19 @@ describe("vehicles", () => {
     expect(dup.body.error.code).toBe("VEHICLE_PLATE_CONFLICT");
   });
 
+  test("admin PATCH plate conflict -> 409", async () => {
+    await makeEmployee({ role: "ADMIN", username: "admin1" });
+    const first = await makeVehicle({ plate: "ABC-1234" });
+    const second = await makeVehicle({ plate: "XYZ-9999" });
+    const session = await loginAs(app, "admin1");
+    const res = await withAuth(
+      request(app).patch(`/api/vehicles/${second.id}`),
+      session,
+    ).send({ plate: first.plate });
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe("VEHICLE_PLATE_CONFLICT");
+  });
+
   test("invalid owner -> 400", async () => {
     await makeEmployee({ role: "ADMIN", username: "admin1" });
     const inactive = await makeEmployee({

@@ -7,6 +7,7 @@ import {
 } from "@vms/shared";
 import { prisma } from "../db/prisma.js";
 import { HttpError } from "../lib/http-error.js";
+import { isPrismaKnownError } from "../lib/prisma-error.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 
 export const vehiclesRouter: Router = Router();
@@ -71,7 +72,7 @@ vehiclesRouter.post("/", requireAdmin, async (req, res) => {
     res.status(201).json(created);
   } catch (err) {
     if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
+      isPrismaKnownError(err) &&
       err.code === "P2002"
     ) {
       throw new HttpError(409, "VEHICLE_PLATE_CONFLICT", "車牌已存在");
@@ -82,15 +83,16 @@ vehiclesRouter.post("/", requireAdmin, async (req, res) => {
 
 vehiclesRouter.patch("/:id", requireAdmin, async (req, res) => {
   const data = updateVehicleSchema.parse(req.body);
+  const id = req.params.id as string;
   if ("ownerId" in data) await assertActiveOwner(data.ownerId ?? null);
   try {
     const updated = await prisma.vehicle.update({
-      where: { id: req.params.id },
+      where: { id },
       data,
     });
     res.json(updated);
   } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownError(err)) {
       if (err.code === "P2025") {
         throw new HttpError(404, "VEHICLE_NOT_FOUND", "找不到該車輛");
       }
@@ -103,12 +105,13 @@ vehiclesRouter.patch("/:id", requireAdmin, async (req, res) => {
 });
 
 vehiclesRouter.delete("/:id", requireAdmin, async (req, res) => {
+  const id = req.params.id as string;
   try {
-    await prisma.vehicle.delete({ where: { id: req.params.id } });
+    await prisma.vehicle.delete({ where: { id } });
     res.status(204).end();
   } catch (err) {
     if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
+      isPrismaKnownError(err) &&
       err.code === "P2025"
     ) {
       throw new HttpError(404, "VEHICLE_NOT_FOUND", "找不到該車輛");

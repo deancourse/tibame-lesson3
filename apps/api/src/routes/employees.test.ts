@@ -96,6 +96,50 @@ describe("employees", () => {
     expect(dup.body.error.details.field).toBe("username");
   });
 
+  test("duplicate email on create -> 409 with details.field", async () => {
+    await makeEmployee({ role: "ADMIN", username: "admin1" });
+    const session = await loginAs(app, "admin1");
+    await withAuth(request(app).post("/api/employees"), session).send({
+      employeeNo: "E-9001",
+      name: "Bob",
+      email: "bob@vms.local",
+      department: "業務",
+      position: "專員",
+      hiredAt: "2025-01-01",
+      phone: "0900-111-222",
+      username: "bob",
+      initialPassword: "password123",
+    });
+    const dup = await withAuth(request(app).post("/api/employees"), session).send({
+      employeeNo: "E-9002",
+      name: "Bob2",
+      email: "bob@vms.local",
+      department: "業務",
+      position: "專員",
+      hiredAt: "2025-01-01",
+      phone: "0900-111-222",
+      username: "bob2",
+      initialPassword: "password123",
+    });
+    expect(dup.status).toBe(409);
+    expect(dup.body.error.code).toBe("EMPLOYEE_CONFLICT");
+    expect(dup.body.error.details.field).toBe("email");
+  });
+
+  test("duplicate employeeNo on update -> 409 with details.field", async () => {
+    await makeEmployee({ role: "ADMIN", username: "admin1" });
+    const first = await makeEmployee({ role: "USER", username: "first" });
+    const second = await makeEmployee({ role: "USER", username: "second" });
+    const session = await loginAs(app, "admin1");
+    const res = await withAuth(
+      request(app).patch(`/api/employees/${second.id}`),
+      session,
+    ).send({ employeeNo: first.employeeNo });
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe("EMPLOYEE_CONFLICT");
+    expect(res.body.error.details.field).toBe("employeeNo");
+  });
+
   test("admin cannot demote self", async () => {
     const admin = await makeEmployee({ role: "ADMIN", username: "admin1" });
     const session = await loginAs(app, "admin1");
