@@ -13,7 +13,7 @@ Vehicle Management System (VMS), a Traditional-Chinese internal app. npm workspa
 - `apps/api` — Express 5 + Prisma 7 + Postgres 16. `@vms/api`. Prisma client 由 `prisma generate` 產生到 `src/generated/prisma/`（gitignored；`db:migrate` 會順帶 generate，fresh clone 後需先跑一次才能過型別檢查）。datasource URL 在 `prisma.config.ts`（自行載入根目錄 `.env`），不在 schema.prisma。
 - `apps/web` — Vite + React 19 + Tailwind 4（CSS-first 設定在 `src/index.css`，無 tailwind.config.js）+ shadcn/ui + TanStack Query/Table + Zustand + React Router 7. `@vms/web`.
 - `packages/shared` — `@vms/shared`. Zod schemas, shared types, `ApiError` taxonomy. Both ends import from here; do not duplicate schemas.
-- `infra/pgadmin` — pgAdmin auto-provisioning (`servers.json` + `pgpass` mounted read-only).
+- `infra/pgadmin` — pgAdmin auto-provisioning (`servers.json` + `pgpass` mounted read-only). `pgpass` uses a wildcard database field (`db:5432:*:vms:vms`) so the same connection auto-authenticates against every database in the instance (`vms`, `vms_test`, any future one) — pinning it to one database name reintroduces `fe_sendauth: no password supplied` when browsing the others. Editing either file requires `docker compose restart pgadmin` (they're only read at container entrypoint).
 - `openspec/` — change proposals, design, specs, and tasks. The archived `add-vehicle-management-system` change is the source of truth for current behavior. New work follows the OpenSpec workflow (`.cursor/skills/` and the `opsx:*` / `openspec-*` skills).
 
 ## One-time setup
@@ -22,7 +22,8 @@ Vehicle Management System (VMS), a Traditional-Chinese internal app. npm workspa
 cp .env.example .env
 docker compose up -d        # postgres :5432, pgadmin :5050
 npm install
-npm run db:migrate          # prisma migrate dev (from apps/api)
+npm run db:migrate          # prisma migrate dev (from apps/api) — dev DB (vms)
+npm run db:migrate:test     # creates/migrates the test DB (vms_test) — run once, and again after new migrations
 npm run seed                # creates admin from SEED_ADMIN_USERNAME/PASSWORD
 ```
 
@@ -43,7 +44,8 @@ npm run build          # workspace-aware build
 npm run lint           # root ESLint + per-workspace lint (api/web currently no-op)
 npm test               # root jest, then per-workspace tests
 npm run test:root      # root-only jest (ignores apps/ and packages/)
-npm run db:migrate     # apps/api: prisma migrate dev
+npm run db:migrate     # apps/api: prisma migrate dev (dev DB)
+npm run db:migrate:test # apps/api: create/migrate the test DB (vms_test); rerun after adding a migration
 npm run db:reset       # prisma migrate reset --force (Prisma still prompts)
 npm run db:test:reset  # rebuild the test DB (drop schema + migrate deploy on vms_test)
 npm run db:studio      # prisma studio on :5555
@@ -54,6 +56,7 @@ Single test runs:
 - API: `cd apps/api && NODE_OPTIONS=--experimental-vm-modules npx jest src/routes/auth.test.ts`
 - Web: `cd apps/web && npx vitest run src/pages/Login.test.tsx`
 
+API tests run against a **dedicated test database** (`vms_test`) — a second database inside the same `db` container, kept in sync via `TEST_DATABASE_URL` in `.env`. `apps/api/src/test/env.setup.ts` is registered as a jest `setupFile`; it loads root `.env` and overwrites `process.env.DATABASE_URL` with `TEST_DATABASE_URL` **before** any test file imports `app.ts`/`prisma.ts`, so `PrismaClient` connects to `vms_test`, never the dev `vms` DB. Run `npm run db:migrate:test` once (and again after adding a new Prisma migration) to create/sync `vms_test` — it shells out to `docker compose exec db psql` to create the database, then `prisma migrate deploy`. `jest.config.js` still forces `maxWorkers: 1`; `src/test/setup.ts` exposes `resetDb()` which truncates `auditLog` + `vehicle` + `employee` in `beforeEach`, so each test starts clean and the last test's leftover rows stay inspectable afterward. `vms_test` shows up automatically in pgAdmin's existing "VMS local" server connection (it lists all databases in that Postgres instance) — no `servers.json` change needed. Don't try to parallelize API tests.
 API tests run against a **dedicated test DB** — `TEST_DATABASE_URL` in `.env` (default `vms_test`, same Postgres container as the dev `vms`). How it works:
 
 - `pretest` (`apps/api/scripts/setup-test-db.mjs`) drops the `public` schema and re-applies all migrations via `prisma migrate deploy`, so every `npm test` starts from a clean schema. It deliberately avoids `prisma migrate reset` (interactive + blocked for AI agents).

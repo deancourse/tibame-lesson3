@@ -18,6 +18,7 @@ export default {
     ],
   },
   testMatch: ["<rootDir>/src/**/*.test.ts"],
+  setupFiles: ["<rootDir>/src/test/env.setup.ts"],
   setupFiles: ["<rootDir>/src/test/jest.env.ts"],
   maxWorkers: 1,
   testTimeout: 15000,
