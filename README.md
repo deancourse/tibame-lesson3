@@ -10,7 +10,8 @@
 cp .env.example .env          # 第一次先複製出來、按需修改
 docker compose up -d          # 啟 db (Postgres) + pgadmin (5050)
 npm install                   # 安裝所有 workspace 依賴
-npm run db:migrate            # 建立 schema
+npm run db:migrate            # 建立開發 DB (vms) schema
+npm run db:migrate:test       # 建立/同步測試專用 DB (vms_test)，之後每次新增 migration 都要重跑
 npm run seed                  # 建立第一個 admin（讀 .env 的 SEED_ADMIN_*）
 npm run seed:mock             # 選用：塞 30 員工 + 50 車輛模擬資料，方便看 dashboard / 分頁
 ```
@@ -68,6 +69,16 @@ pgAdmin 操作（登入、連 Postgres、手動建 server）詳見 [`infra/pgadm
 
 ---
 
+## API 測試專用 DB（vms_test）
+
+`apps/api` 的 jest 測試不會再動到開發用的 `vms` DB，而是跑在同一個 `db` 容器裡另一個獨立的 database：`vms_test`（連線字串在 `.env` 的 `TEST_DATABASE_URL`）。
+
+- 第一次使用，或 `apps/api/prisma/migrations` 有新增 migration 後，執行 `npm run db:migrate:test` 建立/同步 `vms_test`。
+- 每個測試前 `resetDb()` 都會清空 `vms_test` 裡的資料表，所以每個 test 都是乾淨環境；測試跑完後最後一筆殘留資料會留著，方便直接在 pgAdmin 打開來看。
+- pgAdmin 不用額外設定：展開左側 **Servers → VMS local → Databases**，`vms_test` 會跟 `vms` 並列出現，且可以直接展開（`infra/pgadmin/pgpass` 用萬用字元讓同一組帳密對該 server 上任何 database 都自動生效，見 [`infra/pgadmin/README.md`](infra/pgadmin/README.md)）。
+
+---
+
 ## 預設 Web 操作流程
 
 1. 開 http://localhost:3087（或實際 Vite 印出的 URL）
@@ -102,11 +113,12 @@ npm run dev          # 同時起 api + web（concurrently，--kill-others-on-fai
 npm run dev:api      # 只起 api（Express / tsx watch）
 npm run dev:web      # 只起 web（Vite）
 npm test             # 跑兩個 app 的測試（api: jest、web: vitest）
-npm run test:api     # 只跑 api 測試（jest，需 docker DB 在跑）
+npm run test:api     # 只跑 api 測試（jest，跑在獨立的 vms_test DB，需 docker db 在跑且已 db:migrate:test）
 npm run test:web     # 只跑 web 測試（vitest）
 npm run lint         # ESLint（整個 repo）
-npm run db:migrate   # prisma migrate dev
-npm run db:reset     # prisma migrate reset --force（直接重置，不會互動詢問）
+npm run db:migrate   # prisma migrate dev（開發 DB：vms）
+npm run db:migrate:test # 建立/同步測試 DB（vms_test），新增 migration 後要重跑
+npm run db:reset     # prisma migrate reset --force（直接重置，不會互動詢問；只動開發 DB）
 npm run db:studio    # 開 prisma studio (5555)
 npm run seed         # 重新建立 seed admin
 npm run seed:mock    # 開發用：保留 ADMIN、清空其他資料，塞 30 員工 + 50 車輛
