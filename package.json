@@ -22,6 +22,7 @@
     "test:api": "npm run test --workspace apps/api",
     "test:web": "npm run test --workspace apps/web",
     "db:migrate": "npm run db:migrate --workspace apps/api",
+    "db:migrate:test": "npm run db:migrate:test --workspace apps/api",
     "db:reset": "npm run db:reset --workspace apps/api",
     "db:test:reset": "npm run db:test:reset --workspace apps/api",
     "db:studio": "npm run db:studio --workspace apps/api",
