@@ -35,3 +35,6 @@ apps/web/.vite/
 
 # PR 描述草稿（git-pr-description skill 產物）
 pr-review.md
+
+# AI 工作紀錄與備份（個人用，不進共享 git 歷史；archive/ 可能含 .env 備份）
+AIData/
