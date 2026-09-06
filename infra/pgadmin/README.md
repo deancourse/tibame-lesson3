@@ -21,6 +21,7 @@
 > `pgpass` 裡的帳密用 `db:5432:*:vms:vms`（database 欄位是萬用字元 `*`），對這個 Postgres instance 上**任何** database（`vms`、`vms_test`，以及未來新增的）都通用。若改回寫死單一 database 名稱，展開非該 database 的節點時會出現 `fe_sendauth: no password supplied` 連線失敗。
 
 > **改過 `pgpass` 或 `servers.json` 之後記得 `docker compose restart pgadmin`**——這兩個檔案是唯讀 bind mount，只有容器啟動時的 entrypoint 會複製/載入一次，改完不重啟不會生效。
+> 測試 DB `vms_test`（由 `npm test` 自動建立／重建）也在同一個 server 底下：展開 **Databases → vms_test** 即可觀察測試留下的資料。`pgpass` 的 DB 欄位是 `*`，連任一 DB 都免輸入密碼。
 
 ## 如果要手動建立 Server（萬一 servers.json 沒生效）
 

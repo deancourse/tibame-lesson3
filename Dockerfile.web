@@ -1,0 +1,24 @@
+# Zeabur 部署用（服務名 web 會自動選用本檔）。同 apps/web/Dockerfile，
+# 但 nginx 改聽 8080 並 proxy 到 api.zeabur.internal:8080。
+FROM node:24-alpine AS builder
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+COPY packages/shared/package.json packages/shared/
+RUN npm ci -w apps/web --ignore-scripts --no-audit --no-fund
+
+COPY tsconfig.base.json ./
+COPY packages/shared packages/shared
+COPY apps/web apps/web
+
+RUN npm run build -w apps/web
+
+FROM nginx:alpine AS runner
+LABEL "language"="nodejs"
+
+COPY apps/web/nginx.zeabur.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
+
+EXPOSE 8080

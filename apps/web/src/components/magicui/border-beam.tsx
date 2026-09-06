@@ -30,7 +30,7 @@ export function BorderBeam({
       }
       className={cn(
         "pointer-events-none absolute inset-0 rounded-[inherit] [border:var(--border-width)_solid_transparent]",
-        "![mask-clip:padding-box,border-box] ![mask-composite:intersect]",
+        "[mask-clip:padding-box,border-box]! mask-intersect!",
         "[mask:linear-gradient(transparent,transparent),linear-gradient(white,white)]",
         "after:absolute after:aspect-square after:w-[calc(var(--size)*1px)]",
         "after:animate-border-beam after:[background:linear-gradient(to_left,var(--color-from),var(--color-to),transparent)]",

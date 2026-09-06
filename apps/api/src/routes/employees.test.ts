@@ -69,7 +69,7 @@ describe("employees", () => {
   test("duplicate username -> 409 with details.field", async () => {
     await makeEmployee({ role: "ADMIN", username: "admin1" });
     const session = await loginAs(app, "admin1");
-    await withAuth(request(app).post("/api/employees"), session).send({
+    const first = await withAuth(request(app).post("/api/employees"), session).send({
       employeeNo: "E-9001",
       name: "Bob",
       email: "bob@vms.local",
@@ -80,6 +80,7 @@ describe("employees", () => {
       username: "bob",
       initialPassword: "password123",
     });
+    expect({ status: first.status, body: first.body }).toMatchObject({ status: 201 });
     const dup = await withAuth(request(app).post("/api/employees"), session).send({
       employeeNo: "E-9002",
       name: "Bob2",

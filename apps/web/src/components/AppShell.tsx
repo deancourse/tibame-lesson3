@@ -74,7 +74,7 @@ export function AppShell() {
           </div>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="glass z-10 flex h-14 shrink-0 items-center justify-end gap-3 border-b px-6 shadow-sm">
+          <header className="glass z-10 flex h-14 shrink-0 items-center justify-end gap-3 border-b px-6 shadow-xs">
             <Button variant="ghost" size="icon" onClick={toggle} aria-label="切換主題">
               {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
             </Button>

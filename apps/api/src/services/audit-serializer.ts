@@ -1,4 +1,4 @@
-import type { AuditLog } from "@prisma/client";
+import type { AuditLog } from "../generated/prisma/client.js";
 import type { AuditLogDTO } from "@vms/shared";
 
 export function serializeAuditLog(a: AuditLog): AuditLogDTO {

@@ -16,11 +16,13 @@ const baseVehicleFields = {
   status: z.enum(VEHICLE_STATUSES),
   mileage: z.number().int().nonnegative(),
   purchasedAt: z.coerce.date(),
-  ownerId: z.string().uuid().nullable().optional(),
+  ownerId: z.uuid().nullable().optional(),
 };
 
 export const createVehicleSchema = z.object(baseVehicleFields);
 export type CreateVehicleInput = z.infer<typeof createVehicleSchema>;
+// 同 employee.ts：表單用 input 型別（z.coerce.date() 的 input 為 unknown）。
+export type CreateVehicleFormInput = z.input<typeof createVehicleSchema>;
 
 export const updateVehicleSchema = z
   .object({
@@ -37,7 +39,7 @@ export const updateVehicleSchema = z
     status: z.enum(VEHICLE_STATUSES).optional(),
     mileage: z.number().int().nonnegative().optional(),
     purchasedAt: z.coerce.date().optional(),
-    ownerId: z.string().uuid().nullable().optional(),
+    ownerId: z.uuid().nullable().optional(),
   })
   .strict();
 

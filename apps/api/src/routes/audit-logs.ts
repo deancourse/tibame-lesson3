@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../generated/prisma/client.js";
 import { AUDIT_ACTION_CATEGORIES, auditLogListQuerySchema } from "@vms/shared";
 import { prisma } from "../db/prisma.js";
 import { HttpError } from "../lib/http-error.js";

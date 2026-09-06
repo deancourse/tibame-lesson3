@@ -1,0 +1,100 @@
+# Production stack：db + api + web，只有 web（nginx）對外開 port。
+#   docker compose -f docker-compose-prod.yml up -d --build
+# 機密（JWT_SECRET、COOKIE_SECRET、SEED_ADMIN_PASSWORD）由根目錄 .env 提供
+# （compose 變數替換自動讀取），不會被打包進 image（見 .dockerignore）。
+name: vms-prod
+
+services:
+  db:
+    image: postgres:16
+    container_name: vms-prod-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-vms}
+      POSTGRES_USER: ${POSTGRES_USER:-vms}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vms}
+    volumes:
+      - vms_prod_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vms} -d ${POSTGRES_DB:-vms}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - vms-prod-net
+    # 不開對外 port，僅供內部網路使用
+
+  # 一次性服務：套用 migration 並建立 admin（seed 具冪等性，已存在就跳過）。
+  # 直接使用 api image 的 builder stage——裡面有 prisma CLI、migrations 與 seed。
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: builder
+    container_name: vms-prod-migrate
+    working_dir: /app/apps/api
+    command: sh -c "npx prisma migrate deploy && npx tsx src/db/seed.ts"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-vms}:${POSTGRES_PASSWORD:-vms}@db:5432/${POSTGRES_DB:-vms}?schema=public
+      SEED_ADMIN_USERNAME: ${SEED_ADMIN_USERNAME:-admin}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:?請在 .env 設定 SEED_ADMIN_PASSWORD}
+      # seed 會載入 src/lib/env.ts，啟動時就驗證這兩個值存在（實際 seed 用不到）
+      JWT_SECRET: ${JWT_SECRET:?請在 .env 設定 JWT_SECRET}
+      COOKIE_SECRET: ${COOKIE_SECRET:?請在 .env 設定 COOKIE_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - vms-prod-net
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: vms-prod-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-vms}:${POSTGRES_PASSWORD:-vms}@db:5432/${POSTGRES_DB:-vms}?schema=public
+      API_PORT: "8090"
+      # 經 nginx 反向代理後前後端同源，CORS 實際上不會觸發；
+      # 刻意不沿用 .env 的 WEB_ORIGIN（那是 dev 用的 Vite origin）。
+      WEB_ORIGIN: ${PROD_WEB_ORIGIN:-http://localhost:8080}
+      JWT_SECRET: ${JWT_SECRET:?請在 .env 設定 JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      COOKIE_SECRET: ${COOKIE_SECRET:?請在 .env 設定 COOKIE_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8090/api/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - vms-prod-net
+    # 不開對外 port，僅供 web 的 nginx 反向代理
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: vms-prod-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PUBLISHED_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - vms-prod-net
+
+volumes:
+  vms_prod_pgdata:
+
+networks:
+  vms-prod-net:
+    name: vms-prod-net

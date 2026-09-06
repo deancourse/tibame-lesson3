@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../generated/prisma/client.js";
 import type { AuditOutcome } from "@vms/shared";
 import type { Role } from "@vms/shared";
 import { prisma } from "../db/prisma.js";

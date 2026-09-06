@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../db/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
 import { VEHICLE_STATUSES, type VehicleStatus } from "@vms/shared";

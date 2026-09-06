@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { renderWithProviders } from "@/test/utils";
@@ -17,6 +18,20 @@ class ResizeObserverMock {
 }
 (globalThis as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver =
   ResizeObserverMock;
+
+// jsdom 沒有 layout，容器永遠量到 0×0；繞過 ResponsiveContainer，直接以固定尺寸渲染圖表本體。
+vi.mock("recharts", async () => {
+  const actual = await vi.importActual<typeof import("recharts")>("recharts");
+  const { cloneElement } = await import("react");
+  return {
+    ...actual,
+    ResponsiveContainer: ({
+      children,
+    }: {
+      children: ReactElement<{ width?: number; height?: number }>;
+    }) => cloneElement(children, { width: 400, height: 300 }),
+  };
+});
 
 beforeEach(() => {
   vi.mocked(apiClient.get as unknown as ReturnType<typeof vi.fn>).mockReset();

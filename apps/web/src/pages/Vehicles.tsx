@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
   createVehicleSchema,
+  type CreateVehicleFormInput,
   type CreateVehicleInput,
   VEHICLE_COLORS,
   VEHICLE_MAKES,
@@ -34,6 +35,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -168,7 +170,7 @@ export function VehiclesPage() {
         <p className="text-sm text-muted-foreground">維護車輛資料、狀態、負責人員與里程紀錄。</p>
       </div>
 
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card/70 p-3 backdrop-blur-sm">
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card/70 p-3 backdrop-blur-xs">
         <div className="flex-1 min-w-[200px] max-w-xs">
           <Label htmlFor="search">搜尋</Label>
           <Input
@@ -208,7 +210,7 @@ export function VehiclesPage() {
         )}
       </div>
 
-      <div className="overflow-hidden rounded-xl border bg-card/70 backdrop-blur-sm">
+      <div className="overflow-hidden rounded-xl border bg-card/70 backdrop-blur-xs">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
@@ -347,7 +349,7 @@ function VehicleSheet({
   onSuccess: () => void;
 }) {
   const isNew = editing === "new";
-  const defaultValues = useMemo<Partial<CreateVehicleInput>>(() => {
+  const defaultValues = useMemo<Partial<CreateVehicleFormInput>>(() => {
     if (isNew)
       return {
         status: "AVAILABLE",
@@ -366,7 +368,7 @@ function VehicleSheet({
       status: v.status,
       mileage: v.mileage,
       // date input 需要 YYYY-MM-DD 字串才能正確回填；提交時由 z.coerce.date() 轉回 Date。
-      purchasedAt: v.purchasedAt.slice(0, 10) as unknown as Date,
+      purchasedAt: v.purchasedAt.slice(0, 10),
       ownerId: v.ownerId ?? undefined,
     };
   }, [editing, isNew]);
@@ -376,7 +378,8 @@ function VehicleSheet({
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<CreateVehicleInput>({
+    // Zod 4：表單欄位用 input 型別（第一個泛型），resolver 驗證後的提交值為 output 型別（第三個泛型）。
+  } = useForm<CreateVehicleFormInput, unknown, CreateVehicleInput>({
     resolver: zodResolver(createVehicleSchema),
     defaultValues,
   });
@@ -415,6 +418,9 @@ function VehicleSheet({
           <SheetTitle>
             {isNew ? "新增車輛" : `編輯 ${(editing as VehicleRow).plate}`}
           </SheetTitle>
+          <SheetDescription className="sr-only">
+            填寫車輛資料後送出儲存
+          </SheetDescription>
         </SheetHeader>
         <form onSubmit={submit} className="mt-2 grid grid-cols-2 gap-3">
           {textFields.map((f) => (

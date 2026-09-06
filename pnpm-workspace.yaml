@@ -1,0 +1,18 @@
+packages:
+  - apps/*
+  - packages/*
+
+# 內部套件用 `"@vms/shared": "*"` 引用（與 npm workspaces 共用同一套 package.json），
+# pnpm 預設只連結 workspace: 協定，需開啟此設定才會把 `*` 解析成 workspace 內的套件
+linkWorkspacePackages: true
+
+# pnpm 10 預設不執行相依套件的 postinstall/build script，
+# 原生模組需明確列入白名單才能編譯
+onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - '@tailwindcss/oxide'
+  - bcrypt
+  - esbuild
+  - prisma
+  - unrs-resolver

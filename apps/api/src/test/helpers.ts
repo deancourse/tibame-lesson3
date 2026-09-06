@@ -1,6 +1,6 @@
 import request from "supertest";
 import type { Application } from "express";
-import type { AuditLog } from "@prisma/client";
+import type { AuditLog } from "../generated/prisma/client.js";
 import { prisma } from "../db/prisma.js";
 import { flushAuditLogs } from "../services/audit-logger.js";
 

@@ -1,0 +1,26 @@
+# 依賴與建置產物（image 內會重新安裝、重新編譯）
+node_modules
+**/node_modules
+**/dist
+**/coverage
+**/*.tsbuildinfo
+apps/api/src/generated
+
+# 機密與本機環境（環境變數一律由 docker compose 注入，絕不打包進 image）
+.env
+.env.*
+
+# 版本控制 / git hooks / 編輯器
+.git
+.husky
+.cursor
+.claude
+
+# 與 build 無關的文件與基礎設施
+doc
+openspec
+infra
+*.md
+pnpm-lock.yaml
+docker-compose.yml
+docker-compose-prod.yml

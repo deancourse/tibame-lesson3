@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../generated/prisma/client.js";
 import {
   createVehicleSchema,
   updateVehicleSchema,
@@ -81,11 +81,13 @@ vehiclesRouter.post("/", requireAdmin, async (req, res) => {
 });
 
 vehiclesRouter.patch("/:id", requireAdmin, async (req, res) => {
+  // Express 5：路由前掛中介層時 params 退回寬鬆字典型別，明確窄化為 string。
+  const { id } = req.params as { id: string };
   const data = updateVehicleSchema.parse(req.body);
   if ("ownerId" in data) await assertActiveOwner(data.ownerId ?? null);
   try {
     const updated = await prisma.vehicle.update({
-      where: { id: req.params.id },
+      where: { id },
       data,
     });
     res.json(updated);
@@ -103,8 +105,9 @@ vehiclesRouter.patch("/:id", requireAdmin, async (req, res) => {
 });
 
 vehiclesRouter.delete("/:id", requireAdmin, async (req, res) => {
+  const { id } = req.params as { id: string };
   try {
-    await prisma.vehicle.delete({ where: { id: req.params.id } });
+    await prisma.vehicle.delete({ where: { id } });
     res.status(204).end();
   } catch (err) {
     if (

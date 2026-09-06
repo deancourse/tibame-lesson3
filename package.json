@@ -24,6 +24,7 @@
     "db:migrate": "npm run db:migrate --workspace apps/api",
     "db:migrate:test": "npm run db:migrate:test --workspace apps/api",
     "db:reset": "npm run db:reset --workspace apps/api",
+    "db:test:reset": "npm run db:test:reset --workspace apps/api",
     "db:studio": "npm run db:studio --workspace apps/api",
     "seed": "npm run seed --workspace apps/api",
     "seed:mock": "npm run seed:mock --workspace apps/api -- --yes",
@@ -31,11 +32,11 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^22.10.2",
-    "concurrently": "^9.1.2",
-    "eslint": "^10.4.0",
-    "husky": "^9.0.0",
-    "prettier": "^3.4.2",
-    "typescript": "^5.7.2"
+    "@types/node": "^25.9.3",
+    "concurrently": "^10.0.3",
+    "eslint": "^10.4.1",
+    "husky": "^9.1.7",
+    "prettier": "^3.8.4",
+    "typescript": "^6.0.3"
   }
 }

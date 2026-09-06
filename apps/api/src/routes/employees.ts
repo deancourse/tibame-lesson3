@@ -1,6 +1,6 @@
 import { Router, type NextFunction, type Request, type Response } from "express";
 import bcrypt from "bcrypt";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../generated/prisma/client.js";
 import {
   createEmployeeSchema,
   employeeListQuerySchema,
@@ -20,7 +20,15 @@ const UNIQUE_FIELDS_FROM_TARGETS: Record<string, "employeeNo" | "email" | "usern
 
 function uniqueConflictField(err: unknown): string | undefined {
   if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-    const target = (err.meta?.target ?? []) as string[];
+    // Prisma 7 的 driver adapter 不再提供 meta.target，
+    // 衝突欄位改放在 meta.driverAdapterError.cause.constraint.fields。
+    const meta = err.meta as
+      | {
+          target?: string[];
+          driverAdapterError?: { cause?: { constraint?: { fields?: string[] } } };
+        }
+      | undefined;
+    const target = meta?.target ?? meta?.driverAdapterError?.cause?.constraint?.fields ?? [];
     for (const t of target) {
       if (UNIQUE_FIELDS_FROM_TARGETS[t]) return UNIQUE_FIELDS_FROM_TARGETS[t];
     }

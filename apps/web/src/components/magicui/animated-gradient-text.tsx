@@ -13,7 +13,7 @@ export function AnimatedGradientText({
   return (
     <span
       className={cn(
-        "inline-block animate-shimmer bg-[length:200%_auto] bg-clip-text text-transparent",
+        "inline-block animate-shimmer bg-size-[200%_auto] bg-clip-text text-transparent",
         className,
       )}
       style={{

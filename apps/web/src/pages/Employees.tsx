@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   createEmployeeSchema,
   resetPasswordSchema,
+  type CreateEmployeeFormInput,
   type CreateEmployeeInput,
   type ResetPasswordInput,
   DEPARTMENTS,
@@ -37,12 +38,14 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -117,7 +120,7 @@ export function EmployeesPage() {
         <p className="text-sm text-muted-foreground">維護員工資料、部門、角色與帳號狀態。</p>
       </div>
 
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card/70 p-3 backdrop-blur-sm">
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card/70 p-3 backdrop-blur-xs">
         <div className="flex-1 min-w-[200px] max-w-xs">
           <Label htmlFor="search">搜尋</Label>
           <Input
@@ -173,7 +176,7 @@ export function EmployeesPage() {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border bg-card/70 backdrop-blur-sm">
+      <div className="overflow-hidden rounded-xl border bg-card/70 backdrop-blur-xs">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
@@ -297,7 +300,8 @@ function EmployeeSheet({
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<CreateEmployeeInput>({
+    // Zod 4：表單欄位用 input 型別（第一個泛型），resolver 驗證後的提交值為 output 型別（第三個泛型）。
+  } = useForm<CreateEmployeeFormInput, unknown, CreateEmployeeInput>({
     resolver: isNew ? zodResolver(createEmployeeSchema) : undefined,
     defaultValues: isNew
       ? {
@@ -313,7 +317,7 @@ function EmployeeSheet({
           department: (editing as EmployeeRow).department as (typeof DEPARTMENTS)[number],
           position: (editing as EmployeeRow).position as (typeof POSITIONS)[number],
           // date input 需要 YYYY-MM-DD 字串才能正確回填；提交時由 z.coerce.date() 轉回 Date。
-          hiredAt: (editing as EmployeeRow).hiredAt.slice(0, 10) as unknown as Date,
+          hiredAt: (editing as EmployeeRow).hiredAt.slice(0, 10),
           phone: (editing as EmployeeRow).phone,
           username: (editing as EmployeeRow).username,
           role: (editing as EmployeeRow).role,
@@ -353,6 +357,9 @@ function EmployeeSheet({
           <SheetTitle>
             {isNew ? "新增員工" : `編輯 ${(editing as EmployeeRow).name}`}
           </SheetTitle>
+          <SheetDescription className="sr-only">
+            填寫員工資料後送出儲存
+          </SheetDescription>
         </SheetHeader>
         <form onSubmit={submit} className="mt-2 grid grid-cols-2 gap-3">
           {textFields.map((f) => (
@@ -497,6 +504,9 @@ function ResetPasswordDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>重設 {employee.name} 的密碼</DialogTitle>
+          <DialogDescription className="sr-only">
+            輸入新密碼後送出，立即更新該員工的登入密碼
+          </DialogDescription>
         </DialogHeader>
         <form
           onSubmit={handleSubmit((values) => reset.mutate(values))}

@@ -52,7 +52,7 @@ export function MultiSelect({
       <DropdownMenuTrigger
         className={cn(
           "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background",
-          "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+          "focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2",
           selected.length === 0 && "text-muted-foreground",
           className,
         )}

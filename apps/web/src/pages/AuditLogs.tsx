@@ -193,7 +193,7 @@ function ParamCell({ metadata }: { metadata: unknown }) {
               left: coords.left,
               transform: coords.placement === "top" ? "translateY(-100%)" : undefined,
             }}
-            className="pointer-events-none z-50 max-h-[60vh] w-max max-w-[22rem] overflow-hidden rounded-lg border bg-popover p-3 text-popover-foreground shadow-xl"
+            className="pointer-events-none z-50 max-h-[60vh] w-max max-w-88 overflow-hidden rounded-lg border bg-popover p-3 text-popover-foreground shadow-xl"
           >
             <pre className="whitespace-pre-wrap break-all font-mono text-xs leading-relaxed">
               {full}
@@ -242,7 +242,7 @@ export function AuditLogsPage() {
         </p>
       </div>
 
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card/70 p-3 backdrop-blur-sm">
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card/70 p-3 backdrop-blur-xs">
         <div className="flex-1 min-w-[180px] max-w-xs">
           <Label htmlFor="search">操作者</Label>
           <Input
@@ -319,7 +319,7 @@ export function AuditLogsPage() {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border bg-card/70 backdrop-blur-sm">
+      <div className="overflow-hidden rounded-xl border bg-card/70 backdrop-blur-xs">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">

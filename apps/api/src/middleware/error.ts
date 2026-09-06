@@ -1,5 +1,5 @@
 import type { ErrorRequestHandler, Request, Response, NextFunction } from "express";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 import { apiError } from "@vms/shared";
 import { HttpError } from "../lib/http-error.js";
 
@@ -17,7 +17,7 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   if (err instanceof ZodError) {
     res
       .status(400)
-      .json(apiError("VALIDATION_ERROR", "輸入欄位驗證失敗", err.flatten()));
+      .json(apiError("VALIDATION_ERROR", "輸入欄位驗證失敗", z.flattenError(err)));
     return;
   }
   console.error(err);

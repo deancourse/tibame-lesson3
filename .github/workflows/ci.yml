@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push: # 所有分支的 push 都觸發
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  test-api:
+    name: API tests (Jest)
+    needs: lint
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: vms
+          POSTGRES_PASSWORD: vms
+          POSTGRES_DB: vms_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vms"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # prisma.config.ts 載入時即解析 DATABASE_URL（無 .env 可讀），CI 一律指向測試 DB
+      DATABASE_URL: postgresql://vms:vms@localhost:5432/vms_test?schema=public
+      TEST_DATABASE_URL: postgresql://vms:vms@localhost:5432/vms_test?schema=public
+      JWT_SECRET: ci-only-jwt-secret-not-for-production-use
+      COOKIE_SECRET: ci-only-cookie-secret-not-for-production
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Generate Prisma client
+        run: npx prisma generate
+        working-directory: apps/api
+      # pretest 會自動重建 vms_test schema（setup-test-db.mjs）
+      - name: Run API tests with coverage
+        run: npm run test --workspace apps/api -- --coverage
+      - name: Upload API coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: api-coverage
+          path: apps/api/coverage
+          if-no-files-found: warn
+
+  test-web:
+    name: Web tests (Vitest)
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Run web tests with coverage
+        run: npm run test --workspace apps/web -- --coverage
+      - name: Upload web coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-coverage
+          path: apps/web/coverage
+          if-no-files-found: warn
