@@ -10,6 +10,7 @@
     "start": "node dist/index.js",
     "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js",
     "db:migrate": "dotenv -e ../../.env -- prisma migrate dev",
+    "db:migrate:test": "tsx src/db/migrate-test.ts",
     "db:reset": "dotenv -e ../../.env -- prisma migrate reset --force",
     "db:studio": "dotenv -e ../../.env -- prisma studio",
     "db:generate": "dotenv -e ../../.env -- prisma generate",
